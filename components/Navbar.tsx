@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 const navItems = [
   { name: "Home", path: "/" },
@@ -17,27 +16,21 @@ const navItems = [
     ],
   },
   { name: "Routing", path: "/topics/routing" },
-  { name: "About", path: "/about" },
+  { name: "Blog", path: "/blog" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [openDropdown, setOpenDropdown] = useState(false);
 
   return (
     <nav className="bg-gray-900 text-white px-6 py-4 shadow-lg relative">
       <ul className="flex space-x-6">
         {navItems.map((item) => (
-          <li
-            key={item.path}
-            className="relative"
-            onMouseEnter={() => item.children && setOpenDropdown(true)}
-            onMouseLeave={() => item.children && setOpenDropdown(false)}
-          >
+          <li key={item.path} className="relative group">
             <Link
               href={item.path}
               className={`${
-                pathname === item.path
+                pathname === item.path || (item.children && pathname.startsWith(item.path))
                   ? "text-yellow-400 font-semibold"
                   : "hover:text-gray-300"
               } transition-colors`}
@@ -46,8 +39,8 @@ export default function Navbar() {
             </Link>
 
             {/* Dropdown for Rendering */}
-            {item.children && openDropdown && (
-              <ul className="absolute left-0 mt-2 w-40 bg-gray-800 shadow-lg rounded-lg py-2">
+            {item.children && (
+              <ul className="absolute left-0 mt-0 top-full w-40 bg-gray-800 shadow-lg rounded-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200">
                 {item.children.map((child) => (
                   <li key={child.path}>
                     <Link
