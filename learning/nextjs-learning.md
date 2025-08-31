@@ -52,5 +52,60 @@ export default async function HomePage() {
   );
 }
 ```
-his will fetch data on the server and render HTML before sending to client.
+this will fetch data on the server and render HTML before sending to client.
 In CRA, this is impossible without extra server setup.
+
+## 2. Explain the difference between: CSR (Client-side Rendering) and SSR (Server-side Rendering) and SSG (Static Site Generation) and ISR (Incremental Static Regeneration)
+
+Rendering Strategies in Next.js
+
+1. CSR (Client-side Rendering)
+
+- Page loads with minimal HTML + JavaScript bundle.
+
+- Data is fetched in the browser (client) after initial page load.
+
+- Good for: dashboards, authenticated pages (SEO not important).
+
+[Code Example]()
+
+2. SSR (Server-side Rendering)
+
+- HTML is generated on each request (server fetch → render → send).
+
+- Good for: dynamic pages that need fresh data on every request.
+
+[Code Example]()
+
+3. SSG (Static Site Generation)
+
+- HTML is pre-rendered at build time and reused for every request.
+
+- Good for: blogs, docs, marketing pages (rarely changing).
+
+[Code Example]()
+
+4. ISR (Incremental Static Regeneration)
+
+- Like SSG, but regenerates a new static page in the background after a set time (`revalidate`).
+
+- Good for: e-commerce product pages, news feeds (data updates but not every second).
+
+[Code Example]()
+
+Real World Examples
+
+- **SSG** → Blog, Portfolio, Docs
+
+- **ISR** → E-commerce sites, News sites (refresh every few minutes)
+
+- **SSR** → Social Media, Real-time dashboards, Chat apps
+
+- **CSR** → Client-only features like notifications, user profile updates
+
+Summary:
+
+- CSR renders data in the browser after load (bad for SEO).
+- SSR renders HTML on every request (fresh but slower).
+- SSG pre-renders at build time (fastest but static).
+- ISR combines SSG + dynamic updates by re-generating pages in the background at intervals.
