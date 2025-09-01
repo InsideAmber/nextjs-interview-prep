@@ -327,7 +327,7 @@ In short:
 
   - Subscribe to route change events
 
-[Code Example]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/about/page.tsx)
 
 Key Difference
 
@@ -347,7 +347,7 @@ In Next.js, navigation is usually handled via the Link component for declarative
 Handling Programmatic Navigation
 
 <!-- check dashboard page for link -->
-[Code Exampe]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/dashboard/page.tsx)
 
 ## 9. What are getStaticProps, getServerSideProps, and getInitialProps and what are equivalent method in latest app router?
 
