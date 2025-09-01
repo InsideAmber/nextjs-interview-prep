@@ -351,4 +351,81 @@ Handling Programmatic Navigation
 
 ## 9. What are getStaticProps, getServerSideProps, and getInitialProps and what are equivalent method in latest app router?
 
+1. `getStaticProps` (Pages Router)
+
+- Runs at build time.
+
+- Generates static HTML + JSON.
+
+- Used for static blogs, docs, marketing sites.
+
+- Supports ISR (Incremental Static Regeneration) with revalidate.
+
+✅ App Router Equivalent
+
+You don’t use `getStaticProps` anymore. Instead:
+
+```tsx
+// app/blog/page.tsx (Server Component)
+export default async function BlogPage() {
+  const posts = await fetch("https://api.example.com/posts", {
+    cache: "force-cache",   // default: static
+    next: { revalidate: 60 } // ISR: revalidate every 60s
+  }).then(res => res.json());
+
+  return <BlogList posts={posts} />;
+}
+```
+👉 `cache: 'force-cache'` ≈ getStaticProps
+👉 `next: { revalidate: 60 }` ≈ ISR
+
+2. `getServerSideProps` (Pages Router)
+
+- Runs on every request.
+
+- Always returns fresh data from server.
+
+- Used for dashboards, auth pages, live data.
+
+✅ App Router Equivalent
+
+```tsx
+// app/dashboard/page.tsx (Server Component)
+export default async function DashboardPage() {
+  const stats = await fetch("https://api.example.com/stats", {
+    cache: "no-store" // disables caching → always fresh
+  }).then(res => res.json());
+
+  return <Dashboard stats={stats} />;
+}
+```
+👉 `cache: 'no-store'` ≈ `getServerSideProps`
+
+3. `getInitialProps` (Pages Router, old)
+
+- Runs on both server and client.
+
+- Can be used in `_app.js` and `_document.js`.
+
+- ❌ But it disables automatic static optimization, causes large bundles, and is considered legacy.
+
+✅ App Router Equivalent
+
+There is no direct replacement.
+
+- Shared logic now goes into Layouts (`app/layout.tsx`).
+
+- Data fetching is handled by Server Components (not a special lifecycle method).
+
+- Client hydration logic is handled in Providers.
+
+
+| Rendering Style | Pages Router (Old)              | App Router (New)                          |
+| --------------- | ------------------------------- | ----------------------------------------- |
+| **SSG**         | `getStaticProps`                | `fetch(..., { cache: 'force-cache' })`    |
+| **ISR**         | `getStaticProps` + `revalidate` | `fetch(..., { next: { revalidate: X } })` |
+| **SSR**         | `getServerSideProps`            | `fetch(..., { cache: 'no-store' })`       |
+| **CSR**         | `useEffect` in client comp      | `"use client"` + `useEffect` fetch        |
+
+
 
