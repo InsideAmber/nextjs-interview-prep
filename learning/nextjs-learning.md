@@ -428,4 +428,135 @@ There is no direct replacement.
 | **CSR**         | `useEffect` in client comp      | `"use client"` + `useEffect` fetch        |
 
 
+## 10. How does data fetching differ in app directory using fetch()?
 
+Old (Pages Router)
+
+- Data fetching was tied to special functions:
+
+  - getStaticProps → SSG (Static Site Generation, built at build time).
+
+  - getServerSideProps → SSR (fetch on every request).
+
+  - getStaticPaths → for dynamic routes.
+
+  - getInitialProps → legacy.
+
+👉 Problem: too many APIs, and limited flexibility (only at page level).
+
+New (App Router –` /app`)
+
+In the App Router, we just use `fetch()` (or any async call like DB queries) inside Server Components.
+Next.js extends the native `fetch()` with built-in caching & revalidation.
+
+✅ Key behaviors of `fetch()` in App Router:
+
+1. Default Caching (Static by default)
+
+```ts
+const data = await fetch("https://api.example.com/posts").then(r => r.json());
+```
+- This is cached at build time (like SSG).
+
+- Next.js treats it as static.
+
+2. Dynamic Data (SSR)
+
+```ts
+const data = await fetch("https://api.example.com/posts", { cache: "no-store" });
+```
+- `cache: "no-store"` disables cache.
+
+- Always fetch fresh data on every request (like `getServerSideProps`).
+
+3. ISR (Incremental Static Regeneration / Revalidation)
+
+```tsx
+const data = await fetch("https://api.example.com/posts", {
+  next: { revalidate: 60 }, // revalidate every 60s
+});
+```
+- Cache the response, but revalidate after 60s.
+
+- Like `getStaticProps` with `revalidate`.
+
+4. Dynamic Routes
+
+You can still use [id] and fetch inside the page or layout file.
+No need for getStaticPaths, because fetch() with revalidate or generateStaticParams handles it.
+
+5. Where you can fetch
+
+- Server Components → Best place (runs only on server, never in client bundle).
+
+- Client Components → Use `useEffect` or SWR/React Query (for client-only fetching).
+
+
+## 11. What are loading and error UI components in App Router?
+
+In the App Router, you don’t use `useState` + conditional UI everywhere for loading/error states like before.
+Instead, Next.js gives you special file-based components:
+
+`loading.tsx`
+
+- A file you put inside a route segment.
+
+- Automatically shown when a Server Component is fetching data (or during suspense).
+
+- Acts like a skeleton / spinner until the data is ready.
+
+- File name must be `loading.tsx` (or `.js`).
+
+✅ Example:
+
+```tsx
+// app/blog/loading.tsx
+export default function Loading() {
+  return <p>⏳ Loading blog posts...</p>;
+}
+```
+When you visit /blog, this UI is shown until your page.tsx fetch finishes.
+
+`error.tsx`
+
+- A file that handles errors thrown in that route segment (or child).
+
+- Acts like an error boundary.
+
+- File name must be `error.tsx`.
+
+Must be a Client Component (`"use client"`) because error boundaries rely on React client-side features.
+
+✅ Example:
+
+```tsx
+// app/blog/error.tsx
+
+"use client";
+
+export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+  return (
+    <div>
+      <h2>🚨 Something went wrong!</h2>
+      <p>{error.message}</p>
+      <button onClick={() => reset()}>Try again</button>
+    </div>
+  );
+}
+```
+reset() will re-attempt rendering the segment (re-run the server component).
+
+Flow Diagram:
+
+```bash
+app/blog/page.tsx → fetch data
+        │
+        ├── success → render page
+        ├── pending → show loading.tsx
+        └── error   → show error.tsx
+```
+Extra Related Files
+
+- `not-found.tsx` → handles 404s inside that segment.
+
+- `global-error.tsx` → top-level error boundary for the whole app.
