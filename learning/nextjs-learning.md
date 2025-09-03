@@ -633,3 +633,125 @@ Key Points
 
 ## 13. What are the use cases for built-in API routes vs calling external APIs?
 
+1. Next.js Built-in API Routes (`app/api/...`)
+
+These are serverless functions that live inside your Next.js app.
+
+✅ Use cases:
+
+1. Custom Backend Logic
+
+- If you need to transform, validate, or sanitize data before sending to the frontend.
+
+- Example: Your frontend form submits sensitive data → you check authentication & validate → then send to DB.
+
+2. Hiding API Keys / Secrets
+
+- You can keep API keys (e.g., Stripe, OpenAI, Firebase Admin SDK) safe in server environment.
+
+- Example: POST `/api/payment` → securely call Stripe → return response.
+
+3. Proxying External APIs
+
+- Avoid exposing direct API URLs or CORS issues.
+
+- Example: Instead of fetching `https://thirdparty.com/api?key=SECRET,`
+your client calls `/api/news` → your Next.js API route fetches data with your secret key → returns clean JSON.
+
+4. Small Backend Needs Without Separate Server
+
+- Useful when your project doesn’t have a full backend but you need basic server functionality (auth, uploads, etc.).
+
+✅ Analogy → Think of API routes as your mini backend built into Next.js.
+
+🔹 2. Calling External APIs (directly in Server Components / fetch)
+
+Instead of making your own API, you directly call an external API from Next.js (server-side or client-side).
+
+✅ Use cases:
+
+1. Public APIs with No Secrets
+
+- Example: Fetching `jsonplaceholder.typicode.com/posts` (like we did in blogs).
+
+- No need for proxying or hiding anything.
+
+2. Faster Development (Skip Middle Layer)
+
+- If API already provides exactly what you need, call it directly.
+
+3. Server-Side Rendering with External APIs
+
+- Example: `app/blog/page.tsx` directly fetching from external API to render posts.
+
+4. Third-party data (News, Weather, etc.)
+
+- If data doesn’t require modification, you don’t need an extra API route.
+
+Comparison Table
+
+| Feature                                | API Routes (`app/api`)                      | External API Direct Call                     |
+| -------------------------------------- | ------------------------------------------- | -------------------------------------------- |
+| **Hides secrets**                      | ✅ Yes                                       | ❌ No                                         |
+| **Custom validation / transformation** | ✅ Yes                                       | ❌ No                                         |
+| **CORS handling**                      | ✅ Yes (Next.js runs on server)              | ❌ Might face issues                          |
+| **Performance**                        | ⚠️ Slight overhead (extra hop)              | ✅ Direct & faster                            |
+| **Best for**                           | Auth, DB ops, payments, proxy, custom logic | Public APIs, read-only data, SEO-ready fetch |
+
+
+Code Example -
+
+👉 Calling External API directly (good for public data):
+
+```tsx
+export default async function BlogPage() {
+  const res = await fetch("https://jsonplaceholder.typicode.com/posts");
+  const posts = await res.json();
+
+  return (
+    <div>
+      <h1>Blogs</h1>
+      {posts.slice(0, 5).map((post: any) => (
+        <p key={post.id}>{post.title}</p>
+      ))}
+    </div>
+  );
+}
+```
+👉 Using API Route for Sensitive Logic:
+
+```tsx
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const res = await fetch("https://jsonplaceholder.typicode.com/posts");
+  const posts = await res.json();
+
+  // Example: transform data before returning
+  return NextResponse.json(posts.slice(0, 5));
+}
+```
+Then call in Client Component:
+
+```tsx
+"use client";
+import { useEffect, useState } from "react";
+
+export default function BlogClient() {
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/posts")
+      .then(res => res.json())
+      .then(data => setPosts(data));
+  }, []);
+
+  return <ul>{posts.map((p: any) => <li key={p.id}>{p.title}</li>)}</ul>;
+}
+```
+
+Rule of Thumb:
+
+- If secrets, auth, DB, payments, transformations → use Next.js API routes.
+
+- If public/read-only APIs → fetch directly in Server Components.
