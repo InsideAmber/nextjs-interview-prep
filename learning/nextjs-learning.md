@@ -560,3 +560,76 @@ Extra Related Files
 - `not-found.tsx` → handles 404s inside that segment.
 
 - `global-error.tsx` → top-level error boundary for the whole app.
+
+## 12. How do you create an API endpoint in Next.js?
+
+How to Create an API Endpoint
+
+- Create a folder inside `app/api/`
+
+- Add a `route.ts` (or `route.j`s) file inside.
+
+- Export HTTP methods (`GET`, `POST`, `PUT`, `DELETE`, etc.) as functions.
+
+Example: Simple API Endpoint
+
+📂 File: `app/api/hello/route.ts`
+
+[Code Example]()
+
+👉 Access at:
+
+```bash
+
+http://localhost:3000/api/hello
+
+```
+- GET `/api/hello` → returns `{ message: "Hello from Next.js API!" }`
+
+- POST `/api/hello` with `{ "name": "Amber" }` → returns `{ message: "Data received", data: { "name": "Amber" } }`
+
+Example: Dynamic API Route
+
+📂 File: `app/api/blog/[id]/route.ts`
+
+[Code Example]()
+
+👉 Access at:
+
+```bash
+
+/api/blog/123
+```
+Response:
+
+```bash
+
+{ "blogId": "123" }
+```
+
+Example: Catch-All API Route
+
+📂 File: `app/api/docs/[...slug]/route.ts`
+
+[Code Example]()
+
+👉 /api/docs/nextjs/routing →
+
+```json
+
+{ "path": ["nextjs", "routing"] }
+
+```
+
+Key Points
+
+- `NextResponse.json()` is used for responses.
+
+- You can export one function per HTTP method in each `route.ts`.
+
+- Folders under `/api/` map directly to API routes.
+
+- Supports dynamic and catch-all routes like pages.
+
+## 13. What are the use cases for built-in API routes vs calling external APIs?
+
