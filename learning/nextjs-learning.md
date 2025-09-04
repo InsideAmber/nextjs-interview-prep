@@ -755,3 +755,272 @@ Rule of Thumb:
 - If secrets, auth, DB, payments, transformations → use Next.js API routes.
 
 - If public/read-only APIs → fetch directly in Server Components.
+
+## 14. How do you handle authentication (JWT/session) in API routes?
+
+Two Main Ways of Handling Authentication in API Routes
+
+1. JWT (Token-based auth)
+
+- Store a JWT in cookies or localStorage.
+
+- Each request to `/api/...` must include the token (e.g., in headers or cookies).
+
+- Backend (API route) verifies the token before proceeding.
+
+2. Session-based auth (with cookies)
+
+- Instead of sending JWT manually, you store a session in DB (Redis/Postgres etc.) and set an HTTP-only cookie.
+
+- Each API request automatically includes the cookie.
+
+- API route validates session ID → fetches user.
+
+Example 1: JWT Authentication in Next.js API Route
+
+Issue JWT when user logs in
+
+📂 `app/api/login/route.ts`
+
+[Code Example]()
+
+👉 Client can store this token (in localStorage or an HTTP-only cookie).
+
+Verify JWT in Protected API Route
+
+📂 `app/api/profile/route.ts`
+
+[Code Example]()
+
+👉 Call with:
+
+```bash
+curl -H "Authorization: Bearer <token>" http://localhost:3000/api/profile
+```
+
+Example 2: Session-based Authentication (safer for web apps)
+
+Instead of sending tokens, you use HTTP-only cookies (cannot be accessed by JS).
+Usually handled by libraries like NextAuth.js, but you can roll your own.
+
+📂 `app/api/login-with-session/route.ts`
+
+[Code Example]()
+
+📂 `app/api/profile-with-session/route.ts`
+
+[Code Example]()
+
+👉 Client doesn’t have to attach anything — browser automatically sends the cookie.
+
+JWT vs Session in Next.js API Routes
+
+| Feature         | JWT                             | Session                        |
+| --------------- | ------------------------------- | ------------------------------ |
+| **Storage**     | LocalStorage / Cookie           | Cookie                         |
+| **Scalability** | ✅ Stateless (easy to scale)     | ❌ Needs DB (Redis, Postgres)   |
+| **Security**    | ❌ Vulnerable if token leaked    | ✅ Safer with HTTP-only cookies |
+| **Best for**    | Mobile apps, microservices APIs | Web apps with login/logout     |
+
+
+Rule of Thumb (Interview Answer):
+
+- Use JWT if you want stateless, mobile-friendly APIs.
+
+- Use Session (cookie-based) if your app is mostly web users → safer against XSS, automatic cookie handling.
+
+- In modern Next.js, many teams use NextAuth.js (now `auth.js`) which supports both under the hood.
+
+## 15. How does Next.js help with SEO out of the box?
+  - Meta tags, Open Graph, SSR, SSG
+
+
+How Next.js Helps with SEO
+
+1. Meta Tags (Title, Description, Keywords, etc.)
+
+- In the App Router (Next.js 13+), you define metadata directly in your page or layout.
+
+- Next.js automatically injects these tags into the `<head>` of your HTML before it reaches the browser, which search engines can crawl.
+
+👉 Example (`app/about/page.tsx`):
+
+```tsx
+export const metadata = {
+  title: "About Amber | Frontend Dev",
+  description: "Amber is a frontend developer with expertise in React & Next.js",
+  keywords: ["Amber", "Frontend", "React", "Next.js"],
+};
+
+export default function AboutPage() {
+  return <h1>About Amber</h1>;
+}
+```
+✔ SEO Benefit → Search engines see the meta tags right away (no JS needed).
+
+2. Open Graph & Social Media Tags
+
+- Next.js metadata API also supports OG tags & Twitter cards for rich previews.
+
+👉 Example (`app/blog/[id]/page.tsx`):
+
+```tsx
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const post = await fetch(`https://jsonplaceholder.typicode.com/posts/${params.id}`)
+    .then((res) => res.json());
+
+  return {
+    title: post.title,
+    description: post.body,
+    openGraph: {
+      title: post.title,
+      description: post.body,
+      url: `https://yoursite.com/blog/${params.id}`,
+      images: [
+        {
+          url: "https://yoursite.com/og-image.png",
+          width: 800,
+          height: 600,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.body,
+      images: ["https://yoursite.com/og-image.png"],
+    },
+  };
+}
+```
+✔ SEO Benefit → When sharing links on LinkedIn, Twitter, WhatsApp, the right preview appears.
+
+3. SSR (Server-Side Rendering)
+
+- Pages are rendered on the server for every request.
+
+- Search engines get fully rendered HTML, not a blank `<div>` like in CSR.
+
+👉 Use Case → Pages with frequent updates (e.g., news, stock prices).
+
+4. SSG (Static Site Generation)
+
+- Pages are pre-built at build time and served as static HTML.
+
+- Search engines can crawl instantly without waiting for JS.
+
+👉 Use Case → Marketing pages, blogs, portfolios.
+
+5. ISR (Incremental Static Regeneration)
+
+- Hybrid between SSR & SSG.
+
+- Content stays static but is re-generated in background (e.g., every 10s).
+
+- SEO stays strong since crawlers always see HTML, not JS.
+
+👉 Use Case → Blogs, e-commerce product pages (not changing every second).
+
+✅ In Short
+
+- Meta tags → Title, description, keywords.
+
+- Open Graph → Social sharing previews.
+
+- SSR/SSG/ISR → Pre-rendered HTML for SEO-friendly crawling.
+
+App Router Metadata API → Cleaner way to handle SEO than old `<Head>` from `next/head`.
+
+## 16. What is Image Optimization in Next.js?
+  - `next/image` component
+
+Image Optimization in Next.js (next/image)
+
+Next.js ships with a special `<Image />` component that automatically optimizes images on-demand.
+
+Instead of serving a raw `<img>`, it handles:
+
+- Lazy Loading (only loads when visible on screen).
+
+- Responsive Sizes (different sizes for mobile, tablet, desktop).
+
+- Automatic Compression & WebP (faster than JPEG/PNG).
+
+- CDN Caching (images are cached & served efficiently).
+
+- Avoids Cumulative Layout Shift (CLS) by requiring width & height.
+
+🔹 Example: Using `next/image`
+
+👉 File: `app/about/page.tsx`
+
+```tsx
+import Image from "next/image";
+
+export const metadata = {
+  title: "About with Image Optimization",
+};
+
+export default function AboutPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">About Amber</h1>
+      <Image
+        src="/profile.jpg"        // local image (in /public folder)
+        alt="Amber Profile"
+        width={400}
+        height={400}
+        priority   // preload for above-the-fold content
+        className="rounded-lg shadow-lg"
+      />
+      <p className="mt-4 text-gray-700">
+        This image is optimized by Next.js automatically.
+      </p>
+    </div>
+  );
+}
+```
+✔ Place `profile.jpg` inside the `public/` folder.
+
+✔ When you build or run dev server, Next.js serves optimized versions.
+
+Remote Images (e.g., from API/CDN)
+
+If you load images from external sources, you must allow their domains in `next.config.js`:
+
+```js
+// next.config.js
+module.exports = {
+  images: {
+    domains: ["images.unsplash.com", "cdn.example.com"],
+  },
+};
+```
+👉 Usage:
+
+```tsx
+<Image
+  src="https://images.unsplash.com/photo-12345"
+  alt="Remote Image"
+  width={600}
+  height={400}
+/>
+```
+
+Benefits for SEO & Performance
+
+✅ Faster load time → improves Core Web Vitals.
+
+✅ Lazy loading → saves bandwidth.
+
+✅ Responsive → mobile users don’t download huge desktop images.
+
+✅ WebP support → smaller size, search engines like it.
+
+In Short
+
+- Use `<Image />` from next/image instead of `<img>`.
+
+- Works with local (public folder) and remote images.
+
+- Gives automatic lazy loading, resizing, caching, and format conversion.
