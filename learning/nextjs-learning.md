@@ -575,7 +575,7 @@ Example: Simple API Endpoint
 
 📂 File: `app/api/hello/route.ts`
 
-[Code Example]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/api/hello/route.ts)
 
 👉 Access at:
 
@@ -592,7 +592,7 @@ Example: Dynamic API Route
 
 📂 File: `app/api/blog/[id]/route.ts`
 
-[Code Example]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/api/blog/%5Bid%5D/route.ts)
 
 👉 Access at:
 
@@ -611,7 +611,7 @@ Example: Catch-All API Route
 
 📂 File: `app/api/docs/[...slug]/route.ts`
 
-[Code Example]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/api/docs/%5B...slug%5D/route.ts)
 
 👉 /api/docs/nextjs/routing →
 
@@ -782,7 +782,7 @@ Issue JWT when user logs in
 
 📂 `app/api/login/route.ts`
 
-[Code Example]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/api/login/route.ts)
 
 👉 Client can store this token (in localStorage or an HTTP-only cookie).
 
@@ -790,7 +790,7 @@ Verify JWT in Protected API Route
 
 📂 `app/api/profile/route.ts`
 
-[Code Example]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/api/profile/route.ts)
 
 👉 Call with:
 
@@ -805,11 +805,11 @@ Usually handled by libraries like NextAuth.js, but you can roll your own.
 
 📂 `app/api/login-with-session/route.ts`
 
-[Code Example]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/api/login-with-session/route.ts)
 
 📂 `app/api/profile-with-session/route.ts`
 
-[Code Example]()
+[Code Example](https://github.com/InsideAmber/nextjs-interview-prep/blob/master/app/api/profile-with-session/route.ts)
 
 👉 Client doesn’t have to attach anything — browser automatically sends the cookie.
 
