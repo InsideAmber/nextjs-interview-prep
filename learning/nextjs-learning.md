@@ -1024,3 +1024,219 @@ In Short
 - Works with local (public folder) and remote images.
 
 - Gives automatic lazy loading, resizing, caching, and format conversion.
+
+## 17. What is Code Splitting and how does Next.js do it automatically?
+
+What is Code Splitting?
+
+👉 In plain React (CRA), if you build your app, it often produces one big JavaScript bundle.
+
+- That means when a user visits any page, the browser downloads all the code for the entire site (even pages the user never visits).
+
+- This increases load time ⏳ and hurts performance & SEO.
+
+Code Splitting = breaking your app into smaller chunks (bundles) so that only the necessary code is sent to the browser.
+
+How Next.js Does Code Splitting Automatically
+
+Next.js does route-based code splitting out of the box 🚀:
+
+- Each page (route) becomes its own JS chunk.
+
+- When you navigate, Next.js loads only the JS for that page.
+
+- Shared components (like Navbar, Layout) are cached & reused.
+
+✅ Example:
+
+```bash
+app/
+ ├─ page.tsx         → "/" → bundle only this page’s code
+ ├─ about/page.tsx   → "/about" → separate chunk
+ ├─ blog/[id]/page.tsx → "/blog/:id" → separate chunk
+ ├─ components/Navbar.tsx → shared chunk
+```
+So:
+
+- Visiting `/` loads → `page.tsx` + shared chunks.
+
+- Navigating to `/about` lazy-loads → `about/page.tsx` only when needed.
+
+👉 This is automatic, you don’t need to configure anything.
+
+Example: Verifying Code Splitting
+
+Run:
+
+```bash
+npm run build
+```
+
+Next.js will output something like:
+
+```bash
+Route (app)                            Size     First Load JS
+┌ ○ /                                  1.2 kB   75.2 kB
+├ ○ /about                             0.9 kB   74.9 kB
+├ ● /blog/[id]                         1.5 kB   76.1 kB
+```
+
+✅ Each route has its own bundle size.
+✅ Shared code (React, Next.js runtime, Navbar, etc.) is deduplicated.
+
+Dynamic Imports (Manual Code Splitting)
+
+Sometimes, you don’t even want an entire component to load until needed (e.g., a heavy chart library).
+Next.js provides `next/dynamic` for manual code splitting.
+
+👉 Example (`app/page.tsx`):
+
+```tsx
+"use client";
+import dynamic from "next/dynamic";
+import { useState } from "react";
+
+// Load Chart component only when used
+const Chart = dynamic(() => import("../components/Chart"), { ssr: false });
+
+export default function HomePage() {
+  const [showChart, setShowChart] = useState(false);
+
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-bold">Home Page</h1>
+      <button
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+        onClick={() => setShowChart(true)}
+      >
+        Show Chart
+      </button>
+      {showChart && <Chart />}
+    </div>
+  );
+}
+```
+✔ The chart code will not be included in the initial bundle.
+✔ It’s lazy-loaded only when needed.
+
+✅ In Short
+
+- Code Splitting = loading only the code needed.
+
+- Next.js automatically splits per route (no config needed).
+
+- For big libraries → use `dynamic()` import to split further.
+
+- This improves performance, SEO, and user experience.
+
+## 18. What is middleware in Next.js and what are use cases?
+
+What is Middleware in Next.js?
+
+- Middleware is code that runs before a request is completed.
+
+- It sits between the user’s request and the response.
+
+- Runs on the Edge Runtime (super fast, deployed globally).
+
+- Can modify requests, responses, redirects, rewrites, or block access.
+
+👉 In simple words: Middleware = request gatekeeper.
+
+Where to Create Middleware
+
+At the root of your project:
+
+```bash
+/middleware.ts
+```
+
+This file runs for every request that matches the paths you define.
+
+Example: Simple Middleware
+
+👉 File: `middleware.ts`
+
+```ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  // Example: Block access to /admin if no token
+  const token = request.cookies.get("session")?.value;
+
+  if (!token && request.nextUrl.pathname.startsWith("/admin")) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  return NextResponse.next(); // continue normally
+}
+
+// Apply only to these routes
+export const config = {
+  matcher: ["/admin/:path*"],
+};
+```
+If a user tries to access `/admin` without session → redirected to `/login`.
+
+Common Use Cases of Middleware
+
+1. Authentication & Authorization
+
+- Protect routes (`/admin`, `/dashboard`).
+
+- Redirect if not logged in.
+
+2. Localization / Internationalization
+
+- Detect user’s country or language from headers.
+
+- Redirect to `/en`, `/fr`, `/hi` automatically.
+
+```ts
+if (request.headers.get("accept-language")?.startsWith("fr")) {
+  return NextResponse.redirect(new URL("/fr", request.url));
+}
+```
+
+3. Bot Detection / Rate Limiting
+
+- Block bots or too many requests.
+
+- Example: Check `user-agent` or track request counts.
+
+4. A/B Testing / Feature Flags
+
+- Serve different versions of a page based on cookie.
+
+- Example: Show new UI to 50% of users.
+
+5. Rewrites
+
+- Re-map routes without changing URL.
+
+- Example: `/blog/123` → internally `/api/posts/123`.
+
+```ts
+return NextResponse.rewrite(new URL("/api/posts/123", request.url));
+```
+
+Middleware vs API Routes
+
+- Middleware → Runs before hitting a page or API.
+
+- API Routes → Handle data processing after request reaches server.
+
+Think:
+
+👉 Middleware = bouncer at the door.
+👉 API Route = bartender serving drinks. 
+
+✅ In Short
+
+- Middleware runs before response → edge fast, no server spin-up.
+
+- Used for auth, redirects, localization, logging, A/B testing, rewrites.
+
+- Defined in `middleware.ts` at project root.
+
