@@ -1448,3 +1448,282 @@ export default function PostForm() {
   );
 }
 ```
+## 20. How do you handle environment variables in nextjs?
+
+1. File Structure
+
+You define environment variables in files like:
+
+- `.env.local` – For development, specific to your local environment.
+
+- `.env.development`, `.env.production`, etc. – For environment-specific setups.
+
+- `.env` – Common variables across all environments.
+
+These files are automatically loaded by Next.js during build and runtime.
+
+2. Naming Conventions
+
+- Variables used only on the server:
+
+```bash
+
+DATABASE_URL=your_database_url
+SECRET_KEY=your_secret_key
+
+```
+Variables exposed to the browser must start with `NEXT_PUBLIC_`:
+
+```bash
+NEXT_PUBLIC_ANALYTICS_ID=your_tracking_id
+```
+👉 Anything without `NEXT_PUBLIC_` is only available on the server, meaning it won’t be bundled into the client-side code.
+
+3. Example `.env.local`
+
+```bash
+DATABASE_URL=postgres://user:pass@localhost:5432/mydb
+SECRET_KEY=my_super_secret
+NEXT_PUBLIC_API_BASE_URL=https://api.example.com
+```
+- `DATABASE_URL` → only accessible in server-side code.
+
+- `SECRET_KEY` → server-only, never exposed to the client.
+
+- `NEXT_PUBLIC_API_BASE_URL` → accessible in both client and server.
+
+✅ How to Use Environment Variables in Code
+
+➤ In Server Components, Server Actions, API Routes:
+
+You access them using `process.env` like this:
+
+```ts
+// Example in a server action
+"use server";
+
+export async function createPost(formData: FormData) {
+  const secret = process.env.SECRET_KEY; // only on the server
+  console.log("Secret key:", secret);
+
+  // use it to connect to DB or authenticate
+}
+```
+In Client Components:
+
+Only variables starting with `NEXT_PUBLIC_` are accessible:
+
+```tsx
+"use client";
+
+export default function Analytics() {
+  console.log("API URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+  return <div>Tracking enabled</div>;
+}
+```
+Security Best Practices
+
+✔ Server-only secrets → do not expose them in client-side code.
+✔ Use `NEXT_PUBLIC_` only for non-sensitive data.
+✔ Never commit `.env.local` or files containing secrets to version control (add it to `.gitignore`).
+✔ For production, set environment variables through your hosting provider (Vercel, Netlify, AWS, etc.) instead of storing them in files.
+
+Real Use Case Example
+
+`.env.local`
+
+Using in API Route (`app/api/posts/route.ts`)
+
+```ts
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+
+export async function GET() {
+  const dbUrl = process.env.DATABASE_URL;
+  console.log("Connecting to database at:", dbUrl);
+
+  const posts = await db.post.findMany();
+  return NextResponse.json(posts);
+}
+```
+Using in Client Component (`app/page.tsx`)
+
+```tsx
+"use client";
+
+export default function Home() {
+  console.log("Mapbox Token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
+  return <div>Map is loaded!</div>;
+}
+```
+Summary
+
+| Feature               | How to use                            | Where available                               |
+| --------------------- | ------------------------------------- | --------------------------------------------- |
+| Server-only variables | `process.env.SECRET_KEY`              | Server components, server actions, API routes |
+| Public variables      | `process.env.NEXT_PUBLIC_*`           | Server & client                               |
+| Files                 | `.env.local`, `.env.production`, etc. | Automatically loaded by Next.js               |
+| Security              | Keep sensitive data server-only       | Add `.env.local` to `.gitignore`              |
+
+
+## 21. What is `next.config.js` and what are some things you’ve configured in it?
+
+✅ What is `next.config.js`?
+
+- It’s a JavaScript file at the root of your project:
+
+```bash
+next.config.js
+```
+- Exports a configuration object that Next.js reads at build time and runtime.
+
+- Used to tweak default behaviors, set environment variables, enable optimizations, etc.
+
+- Can also extend Webpack, adjust redirects, rewrites, headers, and more.
+
+Example `next.config.js`
+
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true, // enables React's strict mode for development
+  swcMinify: true,        // uses SWC for faster JavaScript minification
+  images: {
+    domains: ["images.unsplash.com"], // allow external image domains
+  },
+  env: {
+    CUSTOM_API_URL: process.env.CUSTOM_API_URL, // add custom env vars
+  },
+  async redirects() {
+    return [
+      {
+        source: "/old-path",
+        destination: "/new-path",
+        permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/blog/:slug",
+        destination: "/api/blog/:slug",
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+Common Configurations You Might Use
+
+🔹 1. `reactStrictMode`
+
+```js
+reactStrictMode: true
+```
+- Helps find potential problems in your React components during development.
+
+🔹 2. `images.domains`
+
+```js
+images: {
+  domains: ["example.com"],
+}
+```
+- Allows `next/image` to load images from external sources.
+
+🔹 3. `env`
+
+```js
+env: {
+  CUSTOM_API_URL: process.env.CUSTOM_API_URL,
+}
+```
+- Statically exposes environment variables during build time.
+
+🔹 4. `async redirects()`
+
+```js
+async redirects() {
+  return [
+    {
+      source: "/old-url",
+      destination: "/new-url",
+      permanent: true,
+    },
+  ];
+}
+```
+- Redirect users from old URLs to new ones.
+
+🔹 5. `async rewrites()`
+
+```js
+async rewrites() {
+  return [
+    {
+      source: "/custom-route/:slug",
+      destination: "/api/content/:slug",
+    },
+  ];
+}
+```
+- Mask or rewrite URLs to different endpoints without changing the visible path.
+
+🔹 6. webpack Customization
+
+You can extend or override Webpack’s default configuration.
+
+```js
+webpack(config) {
+  config.module.rules.push({
+    test: /\.md$/,
+    use: "raw-loader",
+  });
+  return config;
+}
+```
+🔹 7. `i18n` for Internationalization
+
+```js
+i18n: {
+  locales: ["en", "fr", "es"],
+  defaultLocale: "en",
+}
+```
+- Enable built-in support for multiple languages.
+
+Things I’ve Configured in Projects
+
+Here are some real-world setups:
+
+✔ Image optimization — added trusted domains for loading images from CMS or external APIs
+✔ Environment variables — exposed non-sensitive data to client, kept secrets in server-only config
+✔ Redirects — handled outdated URLs for SEO preservation
+✔ Rewrites — masked API endpoints behind pretty URLs
+✔ SWC Minification — improved build speed
+✔ i18n — localized content for global audiences
+✔ Custom Webpack loaders — imported markdown or other file types
+
+TL;DR
+
+`next.config.js` is the place where you:
+
+- Control how Next.js builds and runs your app
+
+- Add environment variables
+
+- Enable optimizations like image handling and minification
+
+- Redirect or rewrite URLs for better UX and SEO
+
+- Extend Webpack and other settings for advanced use cases
+
+
+
+
+
+
+
